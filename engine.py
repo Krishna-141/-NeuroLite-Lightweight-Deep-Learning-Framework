@@ -1,6 +1,7 @@
 import math
 import numpy as np
-class tensor:
+
+class Tensor:
 
     def __init__(self,data,_children=(),_op='',label=''):
         self.data=np.array(data,dtype=np.float64)
@@ -14,8 +15,8 @@ class tensor:
         return f"{self.data}"
         
     def __add__(self, other):
-        other = other if isinstance(other, tensor) else tensor(other)
-        out = tensor(self.data + other.data, (self, other), '+')
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        out = Tensor(self.data + other.data, (self, other), '+')
         
         def _backward():
             # Handle broadcasting by summing over broadcasted dimensions
@@ -43,8 +44,8 @@ class tensor:
         return self + other     
     
     def __sub__(self, other):
-        other = other if isinstance(other, tensor) else tensor(other)
-        out = tensor(self.data - other.data, (self, other), '-')
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        out = Tensor(self.data - other.data, (self, other), '-')
         
         def _backward():
             # Handle broadcasting for self
@@ -68,11 +69,11 @@ class tensor:
         return out
     
     def __rsub__(self, other):  # other - self
-        other = other if isinstance(other, tensor) else tensor(other)
+        other = other if isinstance(other, Tensor) else Tensor(other)
         return other - self
         
     def sum(self, axis=None, keepdims=False):
-        out = tensor(np.sum(self.data, axis=axis, keepdims=keepdims), (self,), 'sum')
+        out = Tensor(np.sum(self.data, axis=axis, keepdims=keepdims), (self,), 'sum')
     
         def _backward():
             # Expand gradient to the original shape
@@ -87,8 +88,8 @@ class tensor:
 
     
     def __mul__(self, other):
-        other = other if isinstance(other, tensor) else tensor(other)
-        out = tensor(self.data * other.data, (self, other), '*')
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        out = Tensor(self.data * other.data, (self, other), '*')
         
         def _backward():
             # Handle broadcasting for self
@@ -115,8 +116,8 @@ class tensor:
         return self * other
      
     def __truediv__(self, other):
-        other = other if isinstance(other, tensor) else tensor(other)
-        out = tensor(self.data / other.data, (self, other), '/')
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        out = Tensor(self.data / other.data, (self, other), '/')
         
         def _backward():
             # Handle broadcasting for self
@@ -142,9 +143,9 @@ class tensor:
     def zero_grad(self):
         self.grad = np.zeros_like(self.data)
     
-    def matmul(self, other):
-        other = other if isinstance(other, tensor) else tensor(other)
-        out = tensor(self.data @ other.data, (self, other), 'matmul')
+    def __matmul__(self, other):
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        out = Tensor(self.data @ other.data, (self, other), 'matmul')
         
         def _backward():
             self.grad += out.grad @ other.data.T
@@ -153,12 +154,12 @@ class tensor:
         return out
         
     def __rtruediv__(self, other):  
-        other = other if isinstance(other, tensor) else tensor(other)
+        other = other if isinstance(other, Tensor) else Tensor(other)
         return other / self
     
     def __pow__(self, power):
         if isinstance(power, (int, float)):
-            out = tensor(self.data ** power, (self,), f'**{power}')
+            out = Tensor(self.data ** power, (self,), f'**{power}')
             
             def _backward():
                 self.grad += (power * (self.data ** (power - 1))) * out.grad
@@ -166,14 +167,14 @@ class tensor:
             out._backward = _backward
             return out
         else:
-            raise tensorError("Power must be scalar")
+            raise TensorError("Power must be scalar")
     
     def __neg__(self):  # -self
         return self * -1    
         
     def tanh(self):
         t = np.tanh(self.data)
-        out = tensor(t, (self,), 'tanh')
+        out = Tensor(t, (self,), 'tanh')
         def _backward():
             self.grad += (1 - t**2) * out.grad
         out._backward = _backward
