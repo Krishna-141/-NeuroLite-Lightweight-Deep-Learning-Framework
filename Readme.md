@@ -63,12 +63,25 @@ print("Gradient wrt b:", b.grad) #Gradient wrt b: 9.002811953706669e-07
 ```
 
 ---
+
 ### Computation Graph
+
+
 a ----*
+
+
       |→ (mul) → c ----*
+
+
 b ----*               |
+
+
                       |→ (add) → d → tanh → e
+
+
 a --------------------*
+
+
 When .backward() is called on e, gradients flow backwards through this graph automatically.
 ## Matrix Example
 
